@@ -27,4 +27,4 @@ export const updateContactSchema = Joi.object({
   phone: Joi.string().pattern(/^\d+$/).optional().messages({
     'string.pattern.base': 'Phone must be a valid phone number',
   }),
-}).or('name', 'email', 'phone'); // At least one field should be present for update
+}).or('name', 'email', 'phone');
