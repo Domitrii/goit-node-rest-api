@@ -63,7 +63,7 @@ export const createContact = async (req, res) => {
 export const updateContact = async (req, res) => {
   try {
     const contactId = req.params.id;
-    const { error, value } = updateContactSchema.validate(req.body);
+    const { error, value } = updateContactSchema.validate(req.body, { abortEarly: false });
     if (error) {
       return res.status(400).json({ message: error.message });
     }
