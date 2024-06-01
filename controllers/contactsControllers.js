@@ -78,7 +78,7 @@ async function updateContact (req, res, next) {
 
   try {
  
-    const {error} = createContactSchema.validate(req.body)
+    const {error} = updateContactSchema.validate(req.body)
 
     if(error){
       return res.status(400).send(error.message)
