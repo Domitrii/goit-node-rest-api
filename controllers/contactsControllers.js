@@ -1,97 +1,133 @@
-import contactsService from "../services/contactsServices.js";
-import { createContactSchema, updateContactSchema } from "../schemas/contactsSchemas.js";
-import * as fs from "node:fs/promises";
-import path from "node:path";
+import { createContactSchema, updateContactSchema, updateStatusContactSchema } from "../schemas/contactsSchemas.js";
+import Contact from "../modules/contacts.js";
+import mongoose from "mongoose";
 
-const contactsPath = path.resolve("db", "contacts.json");
+async function getAllContacts (req, res, next) {
 
-export const getAllContacts = async (req, res) => {
   try {
-    const contacts = await contactsService.listContacts();
-    res.status(200).json(contacts);
+    const contacts = await Contact.find()
+
+    res.status(200).send(contacts)
   } catch (error) {
-    console.error('Error is: ', error);
-    res.status(500).json({ message: 'Failed to get contacts' });
+    next(error)
   }
 };
 
-export const getOneContact = async (req, res) => {
+async function getOneContact(req, res, next) {
+  const {id} = req.params
+
+  if(!mongoose.Types.ObjectId.isValid(id)){
+    return res.status(400).send({message: 'Invalid ID'})
+}
+
   try {
-    const contactId = req.params.id;
-    const contact = await contactsService.getContactById(contactId);
-    if (contact.message === "not found") {
-      res.status(404).json({ message: 'Contact not found' });
-    } else {
-      res.status(200).json(contact);
+    const contact = await Contact.findById(id)  
+    
+    if(!contact){
+      return res.status(404).send({ message: 'Contact not found' });
     }
+
+    res.status(200).send(contact)
   } catch (error) {
-    console.error('Error is: ', error);
-    res.status(500).json({ message: 'Failed to get contact' });
+    next(error)
   }
 };
 
-export const deleteContact = async (req, res) => {
-  try {
-    const contactId = req.params.id;
-    const deletedContact = await contactsService.removeContact(contactId);
-    if (!deletedContact) {
-      res.status(404).json({ message: 'Contact not found' });
-    } else {
-      res.status(200).json(deletedContact);
+async function deleteContact (req, res, next) {
+  const {id} = req.params
+
+if(!mongoose.Types.ObjectId.isValid(id)){
+        return res.status(404).send({message: "Book not found"})
     }
+
+  try {
+    const result = await Contact.findByIdAndDelete(id)    
+
+    if(!result){
+      return res.status(404).send({ message: 'Contact not found' });
+    }
+
+    res.status(204).send(result)
   } catch (error) {
-    console.error('Error is: ', error);
-    res.status(500).json({ message: 'Failed to delete contact' });
+    next(error)
   }
 };
 
-export const createContact = async (req, res) => {
+async function createContact (req, res, next) {
   try {
-    const { error, value } = createContactSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.message });
+    const {error} = createContactSchema.validate(req.body)
+
+    if(error){
+      return res.status(404).send(error.message)
     }
-    const { name, email, phone } = value;
-    const newContact = await contactsService.addContact(name, email, phone);
-    res.status(201).json(newContact);
+
+    const newContact = await Contact.create(req.body)
+    res.status(201).send(newContact)
   } catch (error) {
-    console.error('Error is: ', error);
-    res.status(500).json({ message: 'Failed to create contact' });
+    next(error)
   }
 };
 
-export const updateContact = async (req, res) => {
+async function updateContact (req, res, next) {
+
+  const {id} = req.params
+
+  if(!mongoose.Types.ObjectId.isValid(id)){
+    return res.status(404).send({message: "Book not found"})
+}
+
   try {
-    const contactId = req.params.id;
-    const { error, value } = updateContactSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.message });
-    }
-    const { name, email, phone } = value;
-    const contacts = await contactsService.listContacts();
-    const contactIndex = contacts.findIndex(({ id }) => id === contactId);
+ 
+    const {error} = createContactSchema.validate(req.body)
 
-    if (contactIndex === -1) {
-      res.status(404).json({ message: 'Contact not found' });
-      return;
+    if(error){
+      return res.status(400).send(error.message)
+    }
+    if (!req.body || Object.keys(req.body).length === 0){
+      return res.status(404).send({message: "Your update is not valid"})
     }
 
-    const updatedContact = {
-      ...contacts[contactIndex],
-      name: name || contacts[contactIndex].name,
-      email: email || contacts[contactIndex].email,
-      phone: phone || contacts[contactIndex].phone,
-    };
+    const updatedContact = await Contact.findByIdAndUpdate(id, req.body, {new: true})
 
-    contacts[contactIndex] = updatedContact;
-    await fs.writeFile(
-      contactsPath,
-      JSON.stringify(contacts, undefined, 2)
-    );
+    if(!updatedContact){
+      return res.status(404)
+    }
 
-    res.status(200).json(updatedContact);
+    res.status(200).send(updatedContact)
+
   } catch (error) {
-    console.error('Error is: ', error);
-    res.status(500).json({ message: 'Failed to update contact' });
+    next(error)
   }
 };
+
+async function updateStatusContact(req, res) {
+
+  const { id } = req.params;
+
+  if(!mongoose.Types.ObjectId.isValid(id)){
+    return res.status(404).send({message: "Book not found"})
+  }
+
+  try {
+
+    const { error } = updateStatusContactSchema.validate(req.body);
+
+    if(error){
+      return res.status(400).send(error.message)
+    }
+    if (!req.body || Object.keys(req.body).length === 0){
+      return res.status(404).send({message: "Your update is not valid"})
+    }
+
+    const updatedContact = await Contact.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
+
+    if (!updatedContact) throw HttpError(404);
+    res.status(200).send(updatedContact);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export default {getAllContacts, getOneContact, deleteContact, createContact, updateContact, updateStatusContact} 
