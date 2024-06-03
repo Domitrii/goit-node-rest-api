@@ -1,6 +1,7 @@
 import { createContactSchema, updateContactSchema, updateStatusContactSchema } from "../schemas/contactsSchemas.js";
 import Contact from "../modules/contacts.js";
 import mongoose from "mongoose";
+import HttpError from "../helpers/HttpError.js";
 
 async function getAllContacts (req, res, next) {
 
@@ -15,9 +16,9 @@ async function getAllContacts (req, res, next) {
 
 async function getOneContact(req, res, next) {
   const {id} = req.params
-
+ 
   if(!mongoose.Types.ObjectId.isValid(id)){
-    return res.status(400).send({message: 'Invalid ID'})
+     return next(new HttpError(400, `${id} is not valid id`))
 }
 
   try {
@@ -37,7 +38,7 @@ async function deleteContact (req, res, next) {
   const {id} = req.params
 
 if(!mongoose.Types.ObjectId.isValid(id)){
-        return res.status(404).send({message: "Book not found"})
+  return next(new HttpError(400, `${id} is not valid id`))
     }
 
   try {
@@ -73,7 +74,7 @@ async function updateContact (req, res, next) {
   const {id} = req.params
 
   if(!mongoose.Types.ObjectId.isValid(id)){
-    return res.status(404).send({message: "Book not found"})
+    return next(new HttpError(400, `${id} is not valid id`))
 }
 
   try {
@@ -105,7 +106,7 @@ async function updateStatusContact(req, res) {
   const { id } = req.params;
 
   if(!mongoose.Types.ObjectId.isValid(id)){
-    return res.status(404).send({message: "Book not found"})
+    return next(new HttpError(400, `${id} is not valid id`))
   }
 
   try {

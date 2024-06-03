@@ -15,6 +15,8 @@ const contactSchema = new mongoose.Schema({
       type: Boolean,
       default: false,
     },
+  }, {
+    versionKey: false,
   }
 )
 
