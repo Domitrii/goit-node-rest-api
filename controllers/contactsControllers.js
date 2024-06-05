@@ -43,9 +43,9 @@ async function deleteContact (req, res, next) {
 async function createContact (req, res, next) {
   try {
     const {error} = createContactSchema.validate(req.body)
-
     if(error){
-      return res.status(404).send(error.message)
+      console.log(error.message)
+      return res.status(400).send({message: error.message})
     }
 
     const newContact = await Contact.create(req.body)
@@ -61,7 +61,7 @@ async function updateContact (req, res, next) {
     if (!isValidObjectId(id)) throw HttpError(400, `${id} is not valid id`);
     const {error} = updateContactSchema.validate(req.body)
     if(error){
-      return res.status(400).send(error.message)
+      return res.status(400).send({message: error.message})
     }
     if (!req.body || Object.keys(req.body).length === 0){
       return res.status(404).send({message: "Your update is not valid"})
@@ -83,7 +83,7 @@ async function updateStatusContact(req, res) {
     const { error } = updateStatusContactSchema.validate(req.body);
 
     if(error){
-      return res.status(400).send(error.message)
+      return res.status(400).send({message: error.message})
     }
     if (!req.body || Object.keys(req.body).length === 0){
       return res.status(404).send({message: "Your update is not valid"})
@@ -96,7 +96,8 @@ async function updateStatusContact(req, res) {
     if (!updatedContact) throw HttpError(404);
     res.status(200).send(updatedContact);
   } catch (error) {
-    next(error);
+    console.error(error)
+    res.status(500).send({message: "Internal Server Error"})
   }
 }
 
