@@ -1,97 +1,104 @@
-import contactsService from "../services/contactsServices.js";
-import { createContactSchema, updateContactSchema } from "../schemas/contactsSchemas.js";
-import * as fs from "node:fs/promises";
-import path from "node:path";
+import { createContactSchema, updateContactSchema, updateStatusContactSchema } from "../schemas/contactsSchemas.js";
+import Contact from "../modules/contacts.js";
+import { isValidObjectId } from "mongoose";
+import HttpError from "../helpers/HttpError.js";
 
-const contactsPath = path.resolve("db", "contacts.json");
+async function getAllContacts (req, res, next) {
 
-export const getAllContacts = async (req, res) => {
   try {
-    const contacts = await contactsService.listContacts();
-    res.status(200).json(contacts);
+    const contacts = await Contact.find()
+
+    res.status(200).send(contacts)
   } catch (error) {
-    console.error('Error is: ', error);
-    res.status(500).json({ message: 'Failed to get contacts' });
+    next(error)
   }
 };
 
-export const getOneContact = async (req, res) => {
+async function getOneContact(req, res, next) {
+  const {id} = req.params
+
   try {
-    const contactId = req.params.id;
-    const contact = await contactsService.getContactById(contactId);
-    if (contact.message === "not found") {
-      res.status(404).json({ message: 'Contact not found' });
-    } else {
-      res.status(200).json(contact);
-    }
+    if (!isValidObjectId(id)) throw HttpError(400, `${id} is not valid id`);
+    const contact = await Contact.findById(id)  
+    if (!contact) throw HttpError(404);
+    res.status(200).send(contact)
   } catch (error) {
-    console.error('Error is: ', error);
-    res.status(500).json({ message: 'Failed to get contact' });
+    next(error)
   }
 };
 
-export const deleteContact = async (req, res) => {
+async function deleteContact (req, res, next) {
+  const {id} = req.params
+
   try {
-    const contactId = req.params.id;
-    const deletedContact = await contactsService.removeContact(contactId);
-    if (!deletedContact) {
-      res.status(404).json({ message: 'Contact not found' });
-    } else {
-      res.status(200).json(deletedContact);
-    }
+    if (!isValidObjectId(id)) throw HttpError(400, `${id} is not valid id`);
+    const result = await Contact.findByIdAndDelete(id)    
+    if (!result) throw HttpError(404);
+    res.status(200).send(result)
   } catch (error) {
-    console.error('Error is: ', error);
-    res.status(500).json({ message: 'Failed to delete contact' });
+    next(error)
   }
 };
 
-export const createContact = async (req, res) => {
+async function createContact (req, res, next) {
   try {
-    const { error, value } = createContactSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.message });
+    const {error} = createContactSchema.validate(req.body)
+    if(error){
+      console.log(error.message)
+      return res.status(400).send({message: error.message})
     }
-    const { name, email, phone } = value;
-    const newContact = await contactsService.addContact(name, email, phone);
-    res.status(201).json(newContact);
+
+    const newContact = await Contact.create(req.body)
+    res.status(201).send(newContact)
   } catch (error) {
-    console.error('Error is: ', error);
-    res.status(500).json({ message: 'Failed to create contact' });
+    next(error)
   }
 };
 
-export const updateContact = async (req, res) => {
+async function updateContact (req, res, next) {
   try {
-    const contactId = req.params.id;
-    const { error, value } = updateContactSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.message });
+    const {id} = req.params
+    if (!isValidObjectId(id)) throw HttpError(400, `${id} is not valid id`);
+    const {error} = updateContactSchema.validate(req.body)
+    if(error){
+      return res.status(400).send({message: error.message})
     }
-    const { name, email, phone } = value;
-    const contacts = await contactsService.listContacts();
-    const contactIndex = contacts.findIndex(({ id }) => id === contactId);
-
-    if (contactIndex === -1) {
-      res.status(404).json({ message: 'Contact not found' });
-      return;
+    if (!req.body || Object.keys(req.body).length === 0){
+      return res.status(404).send({message: "Your update is not valid"})
     }
 
-    const updatedContact = {
-      ...contacts[contactIndex],
-      name: name || contacts[contactIndex].name,
-      email: email || contacts[contactIndex].email,
-      phone: phone || contacts[contactIndex].phone,
-    };
+    const updatedContact = await Contact.findByIdAndUpdate(id, req.body, {new: true})
 
-    contacts[contactIndex] = updatedContact;
-    await fs.writeFile(
-      contactsPath,
-      JSON.stringify(contacts, undefined, 2)
-    );
-
-    res.status(200).json(updatedContact);
+    if (!updatedContact) throw HttpError(404);
+    res.status(200).send(updatedContact)
   } catch (error) {
-    console.error('Error is: ', error);
-    res.status(500).json({ message: 'Failed to update contact' });
+    next(error)
   }
 };
+
+async function updateStatusContact(req, res) {
+  const { id } = req.params;
+  try {
+    if (!isValidObjectId(id)) throw HttpError(400, `${id} is not valid id`);
+    const { error } = updateStatusContactSchema.validate(req.body);
+
+    if(error){
+      return res.status(400).send({message: error.message})
+    }
+    if (!req.body || Object.keys(req.body).length === 0){
+      return res.status(404).send({message: "Your update is not valid"})
+    }
+
+    const updatedContact = await Contact.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
+
+    if (!updatedContact) throw HttpError(404);
+    res.status(200).send(updatedContact);
+  } catch (error) {
+    console.error(error)
+    res.status(500).send({message: "Internal Server Error"})
+  }
+}
+
+export default {getAllContacts, getOneContact, deleteContact, createContact, updateContact, updateStatusContact} 
