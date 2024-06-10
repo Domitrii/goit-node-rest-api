@@ -1,6 +1,6 @@
 import { createContactSchema, updateContactSchema, updateStatusContactSchema } from "../schemas/contactsSchemas.js";
 import Contact from "../modules/contacts.js";
-import mongoose, { isValidObjectId } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import HttpError from "../helpers/HttpError.js";
 
 async function getAllContacts (req, res, next) {
