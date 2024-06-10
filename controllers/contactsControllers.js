@@ -85,6 +85,7 @@ async function updateStatusContact(req, res) {
     if(error){
       return res.status(400).send({message: error.message})
     }
+
     if (!req.body || Object.keys(req.body).length === 0){
       return res.status(404).send({message: "Your update is not valid"})
     }
@@ -97,7 +98,7 @@ async function updateStatusContact(req, res) {
     res.status(200).send(updatedContact);
   } catch (error) {
     console.error(error)
-    res.status(500).send({message: "Internal Server Error"})
+    res.status(404).send({message: "Not found"})
   }
 }
 
