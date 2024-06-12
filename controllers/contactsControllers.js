@@ -4,13 +4,15 @@ import { isValidObjectId } from "mongoose";
 import HttpError from "../helpers/HttpError.js";
 
 async function getAllContacts (req, res, next) {
-
   try {
-    const contacts = await Contact.find()
+    const userId = req.user.id;
+    console.log(userId)
+    const contacts = await Contact.find({userId})
 
     res.status(200).send(contacts)
   } catch (error) {
-    next(error)
+    console.error(error);
+    res.status(500).send({ message: 'Error fetching contacts' });
   }
 };
 

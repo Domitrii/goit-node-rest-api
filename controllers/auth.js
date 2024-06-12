@@ -9,17 +9,14 @@ const {SECRET_PASS} = process.env
 
 async function register(req, res, next){
     try {
-
         const {error} = authSchema.validate(req.body)
         if(error) throw HttpError(400, error.message)
-
         const { email, password } = req.body
 
         const user = await User.findOne({email})
         if(user) throw HttpError(409, "Email in use")
 
         const passwordHash = await bcrypt.hash(password, 10)
-
         const newUser = await User.create({...req.body, password: passwordHash})
         res.status(201).send({user: {
             email: newUser.email, subscription: newUser.subscription
