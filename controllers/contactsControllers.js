@@ -11,8 +11,7 @@ async function getAllContacts (req, res, next) {
 
     res.status(200).send(contacts)
   } catch (error) {
-    console.error(error);
-    res.status(500).send({ message: 'Error fetching contacts' });
+    next(error)
   }
 };
 
