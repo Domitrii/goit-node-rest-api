@@ -69,6 +69,14 @@ async function logout(req, res, next){
     }
 }
 
+async function currentUser(req, res, next){
+    try{
+        res.status(201).send({email: req.user.email, subscription: req.user.subscription })
+    } catch(error) {
+        next(error)
+    }
+}
 
 
-export default {register, login, logout}
+
+export default {register, login, logout, currentUser}
