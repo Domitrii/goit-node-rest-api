@@ -43,16 +43,17 @@ async function deleteContact (req, res, next) {
 
 async function createContact (req, res, next) {
   try {
-    const {error} = createContactSchema.validate(req.body)
-    if(error){
-      console.log(error.message)
-      return res.status(400).send({message: error.message})
-    }
+    const contact = {
+      name: req.body.name,
+      email: req.body.email,
+      phone: req.body.phone,
+      owner: req.user.id,
+    };
+    const addContact = await Contact.create(contact);
 
-    const newContact = await Contact.create(req.body)
-    res.status(201).send(newContact)
+    return res.status(201).send(addContact);
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
