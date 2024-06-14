@@ -40,7 +40,7 @@ async function login(req, res, next){
         if(!comparePassword) throw HttpError(401, "Email or password is wrong")
         
         const token = jwt.sign(
-                {id: user._id}, 
+                {id: user._id, email: user.email, subscription: user.subscription}, 
                 SECRET_PASS,
                 {expiresIn: "23h"}
             )
