@@ -6,7 +6,6 @@ import HttpError from "../helpers/HttpError.js";
 async function getAllContacts (req, res, next) {
   try {
     const userId = req.user.id
-    console.log(userId)
     const contacts = await Contact.find({owner: userId})
 
     res.status(200).send(contacts)
@@ -20,7 +19,7 @@ async function getOneContact(req, res, next) {
 
   try {
     if (!isValidObjectId(id)) throw HttpError(400, `${id} is not valid id`);
-    const contact = await Contact.findById(id)  
+    const contact = await Contact.findOne({_id: id, owner: req.user.id})  
     if (!contact) throw HttpError(404);
     res.status(200).send(contact)
   } catch (error) {
@@ -33,7 +32,7 @@ async function deleteContact (req, res, next) {
 
   try {
     if (!isValidObjectId(id)) throw HttpError(400, `${id} is not valid id`);
-    const result = await Contact.findByIdAndDelete(id)    
+    const result = await Contact.findOneAndDelete({_id: id, owner: req.user.id })    
     if (!result) throw HttpError(404);
     res.status(200).send(result)
   } catch (error) {
@@ -69,7 +68,7 @@ async function updateContact (req, res, next) {
       return res.status(404).send({message: "Your update is not valid"})
     }
 
-    const updatedContact = await Contact.findByIdAndUpdate(id, req.body, {new: true})
+    const updatedContact = await Contact.findOneAndUpdate({_id: id, owner: req.user.id }, req.body, {new: true})
 
     if (!updatedContact) throw HttpError(404);
     res.status(200).send(updatedContact)
