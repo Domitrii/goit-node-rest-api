@@ -6,9 +6,11 @@ import contactsRouter from "./routes/contactsRouter.js";
 import authRouter from './routes/authRoutes.js'
 import authMiddleware from './middleware/auth.js'
 import "./db/db.js"
+import path from 'node:path'
 
 const app = express();
 
+app.use('/avatars', express.static(path.resolve("public/avatars")))
 
 app.use(morgan("tiny"));
 app.use(cors());
