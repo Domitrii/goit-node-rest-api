@@ -79,6 +79,7 @@ async function updateContact (req, res, next) {
 
 async function updateStatusContact(req, res) {
   const { id } = req.params;
+  const userId = req.user._id
   try {
     if (!isValidObjectId(id)) throw HttpError(400, `${id} is not valid id`);
     const { error } = updateStatusContactSchema.validate(req.body);
@@ -88,6 +89,13 @@ async function updateStatusContact(req, res) {
     }
     if (!req.body || Object.keys(req.body).length === 0){
       return res.status(404).send({message: "Your update is not valid"})
+    }
+
+    const contact = Contact.findById(id)
+    if(!contact) throw HttpError(404)
+
+    if (String(contact.owner) !== String(userId)) {
+      return res.status(403).send({ message: "You are not authorized to update this contact" });
     }
 
     const updatedContact = await Contact.findByIdAndUpdate(id, req.body, {
