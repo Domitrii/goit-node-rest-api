@@ -6,6 +6,9 @@ import crypto from "node:crypto"
 
 import User from '../modules/user.js'
 import HttpError from '../helpers/HttpError.js'
+import * as fs from "node:fs/promises";
+import path from "node:path";
+import Jimp from "jimp";
 
 const {SECRET_PASS} = process.env
 
@@ -94,6 +97,29 @@ async function currentUser(req, res, next){
     }
 }
 
+async function changeAvatar(req, res, next) {
+    try {
+        if (!req.file) throw HttpError(400);
+        const avatarSize = await Jimp.read(req.file.path);
+    
+        await avatarSize.resize(256, 256).writeAsync(req.file.path);
+        await fs.rename(
+          req.file.path,
+          path.resolve("public", "avatars", req.file.filename)
+        );
+        const user = await User.findByIdAndUpdate(
+          req.user.id,
+          {
+            avatarURL: `/avatars/${req.file.filename}`,
+          },
+          { new: true }
+        );
+        res.status(201).send({ avatarURL: user.avatarURL });
+      } catch (error) {
+        next(error);
+      }
+  }
 
 
-export default {register, login, logout, currentUser}
+
+export default {register, login, logout, currentUser, changeAvatar}
