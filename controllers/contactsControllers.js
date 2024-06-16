@@ -106,9 +106,9 @@ async function updateStatusContact(req, res) {
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(404).send({ message: "Your update is not valid" });
     }
-
     const contact = await Contact.findById(id)
     if(!contact) throw HttpError(404)
+    
 
     if (String(contact.owner) !== String(userId)) {
       return res.status(403).send({ message: "You are not authorized to update this contact" });
