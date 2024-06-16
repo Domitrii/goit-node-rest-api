@@ -68,6 +68,22 @@ async function createContact(req, res, next) {
   }
 }
 
+async function verifyEmail(req, res, next) {
+  try {
+    const { token } = req.params;
+
+    const user = await User.findOne({ verificationToken: token });
+
+    if (user === null) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    await User.findByIdAndUpdate(user._id, { verify: true, verificationToken: null });
+
+    res.send({ message: "Email confirm successfully" });
+  } catch (error) {}
+}
+
 async function updateContact(req, res, next) {
   try {
     const { id } = req.params;
@@ -95,7 +111,7 @@ async function updateContact(req, res, next) {
 
 async function updateStatusContact(req, res) {
   const { id } = req.params;
-  const userId = req.user._id
+  const userId = req.user._id;
   try {
     if (!isValidObjectId(id)) throw HttpError(400, `${id} is not valid id`);
     const { error } = updateStatusContactSchema.validate(req.body);
@@ -106,12 +122,13 @@ async function updateStatusContact(req, res) {
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(404).send({ message: "Your update is not valid" });
     }
-    const contact = await Contact.findById(id)
-    if(!contact) throw HttpError(404)
-    
+    const contact = await Contact.findById(id);
+    if (!contact) throw HttpError(404);
 
     if (String(contact.owner) !== String(userId)) {
-      return res.status(403).send({ message: "You are not authorized to update this contact" });
+      return res
+        .status(403)
+        .send({ message: "You are not authorized to update this contact" });
     }
 
     const updatedContact = await Contact.findByIdAndUpdate(id, req.body, {
@@ -133,4 +150,5 @@ export default {
   createContact,
   updateContact,
   updateStatusContact,
+  verifyEmail,
 };

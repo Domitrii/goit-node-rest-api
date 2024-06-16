@@ -10,12 +10,11 @@ import path from 'node:path'
 
 const app = express();
 
-app.use('/avatars', express.static(path.resolve("public/avatars")))
-
 app.use(morgan("tiny"));
 app.use(cors());
 app.use(express.json());
 
+app.use('/avatars', express.static(path.resolve("public/avatars")))
 app.use("/api/contacts", authMiddleware ,contactsRouter);
 app.use('/api/users', authRouter)
 
