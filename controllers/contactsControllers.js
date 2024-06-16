@@ -70,18 +70,43 @@ async function createContact(req, res, next) {
 
 async function verifyEmail(req, res, next) {
   try {
-    const { token } = req.params;
+    const { verificationToken } = req.params;
 
-    const user = await User.findOne({ verificationToken: token });
-
+    const user = await User.findOne({ verificationToken: verificationToken });
     if (user === null) {
-      return res.status(404).send({ message: "User not found" });
+      throw HttpError(404, "User not found");
     }
+    await User.findByIdAndUpdate(user._id, {
+      verify: true,
+      verificationToken: null,
+    });
+    res.status(200).send({ message: "Verification successful" });
+  } catch (error) {
+    next(error);
+  }
+}
 
-    await User.findByIdAndUpdate(user._id, { verify: true, verificationToken: null });
-
-    res.send({ message: "Email confirm successfully" });
-  } catch (error) {}
+async function repeatVerifyEmail(req, res, next){
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (user === null) {
+      throw HttpError(404, "User not found");
+    }
+    if (user.verify) {
+      throw HttpError(400, "Verification has already been passed");
+    }
+    sendMail.sendMail({
+      to: email,
+      from: "danilyanishevski2001@gmail.com",
+      subject: "Welcome to contactBook",
+      html: `To confirm your email, click on <a href="http://localhost:3000/users/auth/verify/${user.verificationToken}">link</a>`,
+      text: `To confirm your email, open link http://localhost:3000/users/auth/verify/${user.verificationToken}`,
+    });
+    res.status(200).send({ message: "Verification email sent" });
+  } catch (error) {
+    next(error);
+  }
 }
 
 async function updateContact(req, res, next) {
@@ -151,4 +176,5 @@ export default {
   updateContact,
   updateStatusContact,
   verifyEmail,
+  repeatVerifyEmail
 };
