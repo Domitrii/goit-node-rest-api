@@ -91,7 +91,7 @@ async function updateStatusContact(req, res) {
       return res.status(404).send({message: "Your update is not valid"})
     }
 
-    const contact = Contact.findById(id)
+    const contact = await Contact.findById(id)
     if(!contact) throw HttpError(404)
 
     if (String(contact.owner) !== String(userId)) {
