@@ -10,7 +10,7 @@ function auth(req, res, next){
 
     const [bearer, token] = authorization.split(' ', 2)
     if(bearer !== 'Bearer'){
-        res.status(401).send({message: 'Invalid token format'})
+        return res.status(401).send({message: 'Invalid token format'})
     }
 
     jwt.verify(token, process.env.SECRET_PASS, async (err, decode) =>{
