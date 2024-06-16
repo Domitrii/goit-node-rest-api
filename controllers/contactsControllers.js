@@ -126,29 +126,6 @@ async function updateStatusContact(req, res) {
   }
 }
 
-async function changeAvatar(req, res, next) {
-  try {
-    if (!req.file) throw HttpError(400);
-    const avatarSize = await Jimp.read(req.file.path);
-
-    await avatarSize.resize(256, 256).writeAsync(req.file.path);
-    await fs.rename(
-      req.file.path,
-      path.resolve("public", "avatars", req.file.filename)
-    );
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        avatarURL: `/avatars/${req.file.filename}`,
-      },
-      { new: true }
-    );
-    res.status(201).send({ avatarURL: user.avatarURL });
-  } catch (error) {
-    next(error);
-  }
-}
-
 export default {
   getAllContacts,
   getOneContact,
@@ -156,5 +133,4 @@ export default {
   createContact,
   updateContact,
   updateStatusContact,
-  changeAvatar,
 };
