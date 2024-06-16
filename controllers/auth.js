@@ -25,7 +25,7 @@ async function register(req, res, next){
             to: email,
             from: "domestos.sigma@gmail.com",
             subject: "Welcome to contactBook",
-            html: `To confirm your email, click on <a href="http://localhost:7070/users/auth/verify/${verificationToken}">link</a>`,
+            html: `To confirm your email, click on <a href="http://localhost:7070/api/users/auth/verify/${verificationToken}">link</a>`,
             text: "To confirm your email, click on link"
         })
 
