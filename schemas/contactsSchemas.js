@@ -17,3 +17,7 @@ export const updateContactSchema = Joi.object({
 export const updateStatusContactSchema = Joi.object({
   favorite: Joi.boolean().required(),
 });
+
+export const repeatVerifyEmailSchema = Joi.object({
+  email: Joi.string().email().required(),
+});

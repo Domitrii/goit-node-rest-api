@@ -11,5 +11,6 @@ contactsRouter.delete("/:id", Contacts.deleteContact);
 contactsRouter.post("/", jsonParser ,Contacts.createContact);
 contactsRouter.put("/:id", jsonParser, Contacts.updateContact);
 contactsRouter.patch("/:id/favorite", Contacts.updateStatusContact);
+contactsRouter.get("/auth/verify/:verificationToken", Contacts.verifyEmail)
 
 export default contactsRouter;
