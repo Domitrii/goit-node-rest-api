@@ -1,6 +1,8 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import {authSchema} from '../schemas/auth.js'
+import mail from '../helpers/mail.js'
+import crypto from "node:crypto"
 
 import User from '../modules/user.js'
 import HttpError from '../helpers/HttpError.js'
@@ -17,7 +19,18 @@ async function register(req, res, next){
         if(user) throw HttpError(409, "Email in use")
 
         const passwordHash = await bcrypt.hash(password, 10)
-        const newUser = await User.create({...req.body, password: passwordHash})
+        const verificationToken = crypto.randomUUID()
+
+        mail.sendMail({
+            to: email,
+            from: "domestos.sigma@gmail.com",
+            subject: "Welcome to contactBook",
+            html: `To confirm your email, click on <a href="http://localhost:7070/users/auth/verify/${verificationToken}">link</a>`,
+            text: "To confirm your email, click on link"
+        })
+
+
+        const newUser = await User.create({...req.body, password: passwordHash, verificationToken})
         res.status(201).send({user: {
             email: newUser.email, subscription: newUser.subscription
         }})
@@ -38,6 +51,10 @@ async function login(req, res, next){
 
         const comparePassword = await bcrypt.compare(password, user.password)
         if(!comparePassword) throw HttpError(401, "Email or password is wrong")
+
+        if(user.verify === false){
+            return res.status(401).send("Please verify your email")
+        }
         
         const token = jwt.sign(
                 {id: user._id, email: user.email, subscription: user.subscription}, 
